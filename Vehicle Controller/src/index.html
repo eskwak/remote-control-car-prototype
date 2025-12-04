@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>RC Car Controller</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 1rem;
+      background: #f5f5f5;
+    }
+    h1 { margin-bottom: 0.5rem; }
+
+    .status {
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .connection {
+      margin-bottom: 1rem;
+      padding: 0.5rem;
+      background: #fff;
+      border-radius: 6px;
+    }
+
+    .connected {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .row {
+      margin: 0.5rem 0;
+    }
+
+    button {
+      font-size: 1.1rem;
+      padding: 0.7rem 1.2rem;
+      margin: 0.2rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+    }
+
+    .btn-main {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .btn-secondary {
+      background-color: #555;
+      color: white;
+    }
+
+    .btn-danger {
+      background-color: #d9534f;
+      color: white;
+    }
+
+    input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>RC Car Controller</h1>
+
+  <div class="status">
+    <div>Direction: <span id="dirLabel">FORWARD</span></div>
+    <div>Speed: <span id="speedLabel">0</span></div>
+    <div>Turn: <span id="turnLabel">STRAIGHT</span></div>
+    <div>Accelerating: <span id="accelLabel">NO</span></div>
+  </div>
+
+  <!-- Direction toggle -->
+  <div class="row">
+    <button class="btn-main" id="dirBtn">Toggle Forward/Reverse</button>
+  </div>
+
+  <!-- Speed controls -->
+  <div class="row">
+    <button class="btn-secondary" id="speedDownBtn">- Speed</button>
+    <button class="btn-secondary" id="speedUpBtn">+ Speed</button>
+  </div>
+
+  <!-- Turn controls -->
+  <div class="row">
+    <button class="btn-secondary" id="leftBtn">Left</button>
+    <button class="btn-secondary" id="straightBtn">Straight</button>
+    <button class="btn-secondary" id="rightBtn">Right</button>
+  </div>
+
+  <!-- Accelerate (hold to move) -->
+  <div class="row">
+    <button class="btn-main" id="accelerateBtn">ACCELERATE (Hold)</button>
+  </div>
+
+  <script type="module">
+    // ---------------------------
+    // Firebase imports
+    // ---------------------------
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      update
+    } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBGXfmSrV504OtG8232OJ1NKeNPC2y6s3o",
+      authDomain: "autonomous-vehicle-985f1.firebaseapp.com",
+      databaseURL: "https://autonomous-vehicle-985f1-default-rtdb.firebaseio.com",
+      projectId: "autonomous-vehicle-985f1",
+      storageBucket: "autonomous-vehicle-985f1.firebasestorage.app",
+      messagingSenderId: "486094215958",
+      appId: "1:486094215958:web:7a031f6af8bc88c8fc8e37",
+      measurementId: "G-100C0RMZR8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const controlRef = ref(db, "car/control");
+
+    // ---------------------------
+    // Local state
+    // ---------------------------
+    let speed = 0;          // 0 - 100
+    let forward = true;     // true = forward, false = reverse
+    let turn = 0;           // -1 = left, 0 = straight, 1 = right
+    let accelerating = false;
+
+    // ---------------------------
+    // UI helpers
+    // ---------------------------
+    const dirLabel = document.getElementById("dirLabel");
+    const speedLabel = document.getElementById("speedLabel");
+    const turnLabel = document.getElementById("turnLabel");
+    const accelLabel = document.getElementById("accelLabel");
+
+    function updateUI() {
+      dirLabel.textContent = forward ? "FORWARD" : "REVERSE";
+      speedLabel.textContent = speed.toString();
+
+      if (turn === -1) turnLabel.textContent = "LEFT";
+      else if (turn === 1) turnLabel.textContent = "RIGHT";
+      else turnLabel.textContent = "STRAIGHT";
+
+      accelLabel.textContent = accelerating ? "YES" : "NO";
+    }
+
+    function pushState() {
+      update(controlRef, {
+        speed,
+        forward,
+        turn,
+        accelerating
+      }).catch(err => {
+        console.error("RTDB update error:", err);
+      });
+    }
+
+    // ---------------------------
+    // Button wiring
+    // ---------------------------
+    document.getElementById("dirBtn").onclick = () => {
+      forward = !forward;
+      updateUI();
+      pushState();
+    };
+
+    document.getElementById("speedUpBtn").onclick = () => {
+      speed = Math.min(100, speed + 5);  // step of 5
+      updateUI();
+      pushState();
+    };
+
+    document.getElementById("speedDownBtn").onclick = () => {
+      speed = Math.max(0, speed - 5);    // step of 5
+      updateUI();
+      pushState();
+    };
+
+    document.getElementById("leftBtn").onclick = () => {
+      turn = -1;
+      updateUI();
+      pushState();
+    };
+
+    document.getElementById("straightBtn").onclick = () => {
+      turn = 0;
+      updateUI();
+      pushState();
+    };
+
+    document.getElementById("rightBtn").onclick = () => {
+      turn = 1;
+      updateUI();
+      pushState();
+    };
+
+    // Accelerate: hold down to set accelerating = true,
+    // release to set accelerating = false.
+    const accelBtn = document.getElementById("accelerateBtn");
+
+    function setAccelerating(val) {
+      accelerating = val;
+      updateUI();
+      pushState();
+    }
+
+    // Mouse events
+    accelBtn.addEventListener("mousedown", () => setAccelerating(true));
+    accelBtn.addEventListener("mouseup", () => setAccelerating(false));
+    accelBtn.addEventListener("mouseleave", () => setAccelerating(false));
+
+    // Touch events (mobile)
+    accelBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      setAccelerating(true);
+    });
+    accelBtn.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      setAccelerating(false);
+    });
+
+    // Initialize UI and push an initial "stopped" state
+    updateUI();
+    pushState();
+  </script>
+</body>
+</html>
