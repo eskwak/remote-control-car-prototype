@@ -1,84 +1,127 @@
-// app.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+/**
+ * Description:       JS module for vehicle controller interface. Handles Firebase 
+ *                    configuration, states, UI updates, and writing vehicle control 
+ *                    commands to the firebase RTDB.
+ * 
+ * Author:            Eddie Kwak
+ * Last Modified:     12/7/2025
+ *  */ 
+
+// firebase imports
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import {
   getDatabase,
   ref,
-  set,
-  onValue,
-} from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+  update
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
-// ---- 1) Firebase config (yours) ----
 const firebaseConfig = {
-  apiKey: "AIzaSyBGXfmSrV504OtG8232OJ1NKeNPC2y6s3o",
-  authDomain: "autonomous-vehicle-985f1.firebaseapp.com",
-  databaseURL: "https://autonomous-vehicle-985f1-default-rtdb.firebaseio.com",
-  projectId: "autonomous-vehicle-985f1",
-  storageBucket: "autonomous-vehicle-985f1.firebasestorage.app",
-  messagingSenderId: "486094215958",
-  appId: "1:486094215958:web:7a031f6af8bc88c8fc8e37",
-  measurementId: "G-100C0RMZR8",
-};
+  
+}
 
-// ---- 2) Init Firebase ----
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const controlRef = ref(db, "car/control");
 
-const directionRef = ref(db, "car/direction");
-const speedRef = ref(db, "car/speed");
+// states
+let speed = 50;
+let forward = true;
+let turn = 0;
+let accelerating = false;
 
-// we keep this mirrored with RTDB
-let currentSpeed = 0.4;
+// UI helpers
+const dirLabel = document.getElementById("dirLabel");
+const speedLabel = document.getElementById("speedLabel");
+const turnLabel = document.getElementById("turnLabel");
+const accelLabel = document.getElementById("accelLabel");
 
-// ---- 3) UI helpers ----
-const statusEl = document.getElementById("status");
-const dirDisplay = document.getElementById("dir-display");
-const speedDisplay = document.getElementById("speed-display");
-
-function setStatus(msg) {
-  if (statusEl) statusEl.textContent = msg;
-}
-
-function clampSpeed(x) {
-  if (x < 0.2) return 0.2;
-  if (x > 0.8) return 0.8;
-  return x;
-}
-
-// ---- 4) Button wiring ----
-document.addEventListener("DOMContentLoaded", () => {
-  document
-    .getElementById("btn-forward")
-    .addEventListener("click", () => set(directionRef, "forward"));
-  document
-    .getElementById("btn-back")
-    .addEventListener("click", () => set(directionRef, "back"));
-  document
-    .getElementById("btn-stop")
-    .addEventListener("click", () => set(directionRef, "stop"));
-
-  document.getElementById("btn-faster").addEventListener("click", async () => {
-    currentSpeed = clampSpeed(currentSpeed + 0.2);
-    await set(speedRef, currentSpeed);
-  });
-
-  document.getElementById("btn-slower").addEventListener("click", async () => {
-    currentSpeed = clampSpeed(currentSpeed - 0.2);
-    await set(speedRef, currentSpeed);
-  });
-});
-
-// ---- 5) Live updates from RTDB ----
-onValue(directionRef, (snap) => {
-  const dir = snap.val() ?? "stop";
-  if (dirDisplay) dirDisplay.textContent = dir;
-  setStatus(`Direction: ${dir}, speed: ${currentSpeed.toFixed(2)}`);
-});
-
-onValue(speedRef, (snap) => {
-  const val = snap.val();
-  if (typeof val === "number") {
-    currentSpeed = clampSpeed(val);
+// update UI labels to reflect current controls
+function updateUI() {
+  dirLabel.textContent = forward ? "FORWARD" : "REVERSE";
+  speedLabel.textContent = speed.toString();
+  if (turn === -1) {
+    turnLabel.textContent = "LEFT";
   }
-  if (speedDisplay) speedDisplay.textContent = currentSpeed.toFixed(2);
-  setStatus(`Direction: ${dirDisplay.textContent}, speed: ${currentSpeed.toFixed(2)}`);
+  else if (turn === 1) {
+    turnLabel.textContent = "RIGHT";
+  }
+  else {
+    turnLabel.textContent = "STRAIGHT";
+  }
+  accelLabel.textContent = accelerating ? "YES" : "NO";
+}
+
+// push current state to RTDB
+function pushState() {
+  update(controlRef, {speed, forward, turn, accelerating}).catch(err => console.error(err));
+}
+
+// toggle between forward and reverse direction
+document.getElementById("dirBtn").onclick = () => {
+  forward = !forward;
+  updateUI();
+  pushState();
+};
+
+// increase speed
+document.getElementById("speedUpBtn").onclick = () => {
+  speed = Math.min(100, speed + 10);
+  updateUI();
+  pushState();
+};
+
+// decrease speed
+document.getElementById("speedDownBtn").onclick = () => {
+  speed = Math.max(50, speed - 10);
+  updateUI();
+  pushState();
+};
+
+// set turn direction to left
+document.getElementById("leftBtn").onclick = () => {
+  turn = -1;
+  updateUI();
+  pushState();
+};
+
+// set turn direction to right
+document.getElementById("rightBtn").onclick = () => {
+  turn = 1;
+  updateUI();
+  pushState();
+};
+
+// set turn direction to straight
+document.getElementById("straightBtn").onclick = () => {
+  turn = 0;
+  updateUI();
+  pushState();
+};
+
+// enable/disable accelerating
+function setAccelerating(val) {
+  accelerating = val;
+  updateUI();
+  pushState();
+}
+
+const accelBtn = document.getElementById("accelerateBtn");
+
+// events for accelerating (for web testing)
+accelBtn.addEventListener("mousedown", () => setAccelerating(true));
+accelBtn.addEventListener("mouseup", () => setAccelerating(false));
+accelBtn.addEventListener("mouseleave", () => setAccelerating(false));
+
+// events for accelerating (on phone)
+accelBtn.addEventListener("touchstart", e => {
+  e.preventDefault();
+  setAccelerating(true);
 });
+
+accelBtn.addEventListener("touchend", e => {
+  e.preventDefault();
+  setAccelerating(false);
+});
+
+updateUI();
+pushState();
