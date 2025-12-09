@@ -1,6 +1,14 @@
-#include "pinout.hpp"
-#include "firebase_and_wifi.hpp"
-#include "vehicle_control.hpp"
+/**
+ * Description:     Main file for remote controlled vehicle.
+ * 
+ * Author:          Eddie Kwak
+ * Last Modified:   12/9/2025
+ */
+
+#include "gpio.h"
+#include "wifi_connection.h"
+#include "vehicle_control.h"
+#include "webserver_handler.h"
 
 // setup function contains single execution code
 void setup(void) {
@@ -33,14 +41,22 @@ void setup(void) {
   delay(200);
 
   connect_wifi();
-  connect_firebase();
-  delay(200);
+
+  // Start HTTP server
+  server.on("/", HTTP_GET, handle_root);
+  server.on("/control", HTTP_GET, handle_control);
+  server.begin();
+  Serial.println("HTTP control server started");
 
   stop_motors();
+
 }
 
 // loop for sensor reading and motor updates 
 void loop(void) {
+  // handle incoming HTTP requests
+  server.handleClient();
+
   // loop for sensor readings and motor update
   if (millis() - last_control >= CONTROL_INTERVAL_MS) {
     last_control = millis();
@@ -51,7 +67,7 @@ void loop(void) {
     digitalWrite(FRONT_SENSOR_TRIG_PIN, HIGH);
     delayMicroseconds(10);
     digitalWrite(FRONT_SENSOR_TRIG_PIN, LOW);
-    front_duration = pulseIn(FRONT_SENSOR_ECHO_PIN, HIGH, 30000);
+    front_duration = pulseIn(FRONT_SENSOR_ECHO_PIN, HIGH, 6000);
     front_distance_cm = front_duration * sound_speed / 2;
 
     // back sensor reading
@@ -60,18 +76,9 @@ void loop(void) {
     digitalWrite(BACK_SENSOR_TRIG_PIN, HIGH);
     delayMicroseconds(10);
     digitalWrite(BACK_SENSOR_TRIG_PIN, LOW);
-    back_duration = pulseIn(BACK_SENSOR_ECHO_PIN, HIGH, 30000);
+    back_duration = pulseIn(BACK_SENSOR_ECHO_PIN, HIGH, 6000);
     back_distance_cm = back_duration * sound_speed / 2;
 
     update_motors();
   }
-
-  // loop to read commands from RTDB
-  if (millis() - last_rtdb >= RTDB_INTERVAL_MS) {
-    last_rtdb = millis();
-    read_car_state_from_rtdb();
-  }
-
-  // Serial.print("Distance (cm): ");
-  // Serial.println(front_distance_cm);
 }

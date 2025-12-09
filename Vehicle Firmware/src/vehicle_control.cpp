@@ -1,11 +1,17 @@
-#include "vehicle_control.hpp"
-#include "firebase_and_wifi.hpp"
-#include "pinout.hpp"
+/**
+ * Description:     Handles all Motor control logic and driving decisions.
+ * 
+ * Author:          Eddie Kwak
+ * Last Modified:   12/9/2025     
+ */
+
+#include "vehicle_control.h"
+#include "gpio.h"
 
 // pwm data
 int frequency = 3000;
 int resolution = 8;
-int MIN_DUTY_CYCLE = 50;
+int MIN_DUTY_CYCLE = 80;
 int MIN_TURN_DUTY_CYCLE = 25;
 
 // vehicle data
@@ -16,11 +22,9 @@ bool accelerate = false;
 
 // vehicle control 
 unsigned long last_control = 0;
-unsigned long last_rtdb = 0;
 
-// intervals for ESP32 control and RTDB querying
+// intervals for ESP32 control
 const unsigned long CONTROL_INTERVAL_MS = 20;
-const unsigned long RTDB_INTERVAL_MS = 30;
 
 // approx sound speed for using ultrasonic sensors
 float sound_speed = 0.034;
@@ -34,41 +38,6 @@ const float FRONT_STOP_DISTANCE_CM = 20.0f;
 long back_duration;
 float back_distance_cm;
 const float BACK_STOP_DISTANCE_CM = 20.0f;
-
-void read_car_state_from_rtdb(void) {
-    // speed
-    String speed_string = "/car/control/speed";
-    if (Firebase.RTDB.getInt(&firebase_data, speed_string)) {
-        speed_percent = firebase_data.intData();
-        if (speed_percent < 50) speed_percent = 50;
-        if (speed_percent > 100) speed_percent = 100;
-    }
-    else Serial.printf("Speed read failed: %s\n", firebase_data.errorReason().c_str());
-
-    // direction
-    String direction_string = "/car/control/forward";
-    if (Firebase.RTDB.getBool(&firebase_data, direction_string)) {
-        forward_direction = firebase_data.boolData();
-    }
-    else Serial.printf("Direction read failed: %s\n", firebase_data.errorReason().c_str());
-
-    // turning
-    String turning_string = "/car/control/turn";
-    if (Firebase.RTDB.getInt(&firebase_data, turning_string)) {
-        int turn = firebase_data.intData();
-        if (turn < -1) turn = -1;
-        if (turn > 1) turn = 1;
-        turn_direction = turn;
-    }
-    else Serial.printf("Turn read failed: %s\n", firebase_data.errorReason().c_str());
-
-    // acceleration
-    String acceleration_string = "/car/control/accelerating";
-    if (Firebase.RTDB.getBool(&firebase_data, acceleration_string)) {
-        accelerate = firebase_data.boolData();
-    }
-    else Serial.printf("Accelerate read failed: %s\n", firebase_data.errorReason().c_str());
-}
 
 void stop_motors(void) {
     ledcWrite(LEFT_MOTOR_CHANNEL, 0);
@@ -98,8 +67,8 @@ void update_motors(void) {
         return;
     }
 
-    int base_duty_cycle = 50;
-    if (speed_percent <= 50) base_duty_cycle = 50;
+    int base_duty_cycle = 80;
+    if (speed_percent <= 80) base_duty_cycle = 80;
     else {
         base_duty_cycle = map(speed_percent, 1, 100, MIN_DUTY_CYCLE, 255);
         if (base_duty_cycle < MIN_DUTY_CYCLE) base_duty_cycle = MIN_DUTY_CYCLE;

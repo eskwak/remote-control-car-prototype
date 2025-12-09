@@ -1,37 +1,15 @@
 /**
- * Description:       JS module for vehicle controller interface. Handles Firebase 
- *                    configuration, states, UI updates, and writing vehicle control 
- *                    commands to the firebase RTDB.
+ * Description:       JS for vehicle controller interface.
  * 
  * Author:            Eddie Kwak
- * Last Modified:     12/7/2025
+ * Last Modified:     12/8/2025
  *  */ 
 
-// firebase imports
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  update
-} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBGXfmSrV504OtG8232OJ1NKeNPC2y6s3o",
-  authDomain: "autonomous-vehicle-985f1.firebaseapp.com",
-  databaseURL: "https://autonomous-vehicle-985f1-default-rtdb.firebaseio.com",
-  projectId: "autonomous-vehicle-985f1",
-  storageBucket: "autonomous-vehicle-985f1.firebasestorage.app",
-  messagingSenderId: "486094215958",
-  appId: "1:486094215958:web:7a031f6af8bc88c8fc8e37",
-  measurementId: "G-100C0RMZR8"
-}
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-const controlRef = ref(db, "car/control");
+// make sure to update this with ESP32's current address
+const ESP_ADDRESS = "http://192.168.137.139";
 
 // states
-let speed = 60;
+let speed = 80;
 let forward = true;
 let turn = 0; // left = -1, straight = 0, right = 1
 let accelerating = false;
@@ -59,10 +37,19 @@ function updateUI() {
   accelLabel.textContent = accelerating ? "YES" : "NO";
 }
 
-// pushes current state to RTDB
+// sends current state to ESP32 webserver
 function pushState() {
-  update(controlRef, {speed, forward, turn, accelerating}).catch(console.error);
+  const params = new URLSearchParams({
+    speed: speed.toString(),
+    forward: forward ? "1" : "0",
+    turn: turn.toString(),                // -1, 0, 1
+    accelerating: accelerating ? "1" : "0"
+  });
+
+  fetch(`${ESP_ADDRESS}/control?${params.toString()}`)
+    .catch(console.error);
 }
+
 
 // increase speed button
 document.getElementById("speedUpBtn").onclick = () => {

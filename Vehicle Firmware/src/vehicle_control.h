@@ -1,3 +1,10 @@
+/**
+ * Description:     Header file for vehicle_control.cpp.
+ * 
+ * Author:          Eddie Kwak
+ * Last Modified:   12/9/2025
+ */
+
 #ifndef VEHICLE_CONTROL_HPP
 #define VEHICLE_CONTROL_HPP
 
@@ -17,11 +24,9 @@ extern bool accelerate;
 
 // control variables
 extern unsigned long last_control;
-extern unsigned long last_rtdb;
 
-// intervals for updating controls and querying RTDB
+// intervals for updating controls
 extern const unsigned long CONTROL_INTERVAL_MS;
-extern const unsigned long RTDB_INTERVAL_MS;
 
 // sound speed for ultrasonic sensor
 extern float sound_speed;
@@ -31,9 +36,6 @@ extern long front_duration;
 extern float front_distance_cm;
 extern long back_duration;
 extern float back_distance_cm;
-
-// reads car state from rtdb
-void read_car_state_from_rtdb(void);
 
 // stops motors
 void stop_motors(void);

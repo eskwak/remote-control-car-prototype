@@ -1,3 +1,10 @@
+/**
+ * Description:     Defines all GPIO pin assignments for ESP32 peripherals.
+ * 
+ * Author:          Eddie Kwak
+ * Last Modified:   12/8/2025
+ */
+
 #ifndef PINOUT_HPP
 #define PINOUT_HPP
 
