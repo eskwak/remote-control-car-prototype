@@ -10,7 +10,7 @@ body {
   text-align: center;
   margin: 0;
   padding: 1rem;
-  background: #c2fcab;
+  background: #84dcf4;
 }
 
 h1 {
@@ -31,7 +31,7 @@ h1 {
 
 .connected {
   background: #d4edda;
-  color: #155724;
+  color: #000306;
 }
 
 .disconnected {
@@ -73,4 +73,30 @@ input {
   margin: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+.controller-layout {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.left-controls {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+
+.right-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .controller-layout {
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }

@@ -18,7 +18,7 @@
 
     <div class="status">
       <div>Direction: <span id="dirLabel">FORWARD</span></div>
-      <div>Speed: <span id="speedLabel">60</span></div>
+      <div>Speed: <span id="speedLabel">5</span></div>
       <div>Turn: <span id="turnLabel">STRAIGHT</span></div>
       <div>Accelerating: <span id="accelLabel">NO</span></div>
     </div>
@@ -29,16 +29,21 @@
       <button class="btn-secondary" id="speedUpBtn">+ Speed</button>
     </div>
 
+    <!-- autonomous mode toggling -->
+    <div class="row">
+      <button class="btn-secondary" id="autoBtn">Auto: OFF</button>
+    </div>
+
     <!-- direction controls -->
-    <div class="row">
-      <button class="btn-main" id="forwardBtn">Forward</button>
-    </div>
-    <div class="row">
-      <button class="btn-main" id="leftBtn">&nbsp; &nbsp; Left &nbsp; &nbsp;</button>
-      <button class="btn-main" id="rightBtn">&nbsp; &nbsp; Right &nbsp; &nbsp;</button>
-    </div>
-    <div class="row">
-      <button class="btn-main" id="backwardBtn">Backward</button>
+    <div class="controller-layout">
+      <div class="left-controls">
+        <button class="btn-main" id="leftBtn">Left</button>
+        <button class="btn-main" id="rightBtn">Right</button>
+      </div>
+      <div class="right-controls">
+        <button class="btn-main" id="forwardBtn">Forward</button>
+        <button class="btn-main" id="backwardBtn">Backward</button>
+      </div>
     </div>
 
     <script type="module" src="app.js"></script>

@@ -19,8 +19,8 @@ void handle_control(void) {
     // speed
     if (server.hasArg("speed")) {
         int speed = server.arg("speed").toInt();
-        if (speed < 80) speed = 80;
-        if (speed > 100) speed = 100;
+        if (speed < MIN_SPEED_PERCENT) speed = MIN_SPEED_PERCENT;
+        if (speed > MAX_SPEED_PERCENT) speed = MAX_SPEED_PERCENT;
         speed_percent = (uint8_t)speed;
     }
 
@@ -44,6 +44,13 @@ void handle_control(void) {
         int is_accelerating = server.arg("accelerating").toInt();
         if (is_accelerating == 1) accelerate = true;
         else accelerate = false;
+    }
+
+    // autonomous mode
+    if (server.hasArg("auto")) {
+        int is_auto = server.arg("auto").toInt();
+        if (is_auto == 1) autonomous_mode = true;
+        else autonomous_mode = false;
     }
 
     server.send(200, "text/plain", "OK");

@@ -11,7 +11,7 @@
 
 #include <WebServer.h>
 
-WebServer server(80);
+extern WebServer server;
 
 void handle_root(void);
 
