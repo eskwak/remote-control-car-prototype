@@ -1,8 +1,8 @@
 # ESP32 Semi-Autonomous Vehicle
 The semi-autonomous vehicle navigates through obstacles using readings from ultrasonic sensors. The vehicle can be manually controlled using 
-the web-based controller in */Vehicle Controller* but this was mainly developed for movement testing prior to integrating the ultrasonic sensors.
+the web-based controller in */Vehicle Controller* but this was mainly developed for movement testing prior to integrating the ultrasonic sensors The final product is expected to be fully autonomous without support for manual control.
 
-**This project is currently in development. The final goal is to create a Roomba-style cleaning device.**
+**Note: This project is currently in development. The final goal is to create a Roomba-style cleaning device.**
 
 ## Hardware 
 | Component | Description |
@@ -14,8 +14,8 @@ the web-based controller in */Vehicle Controller* but this was mainly developed 
 | **Chassis** | 3-D printed chassis using Bambu Studio and Onshape for design |
 
 ## Software & Toolchain
-The embedded software written in */Vehicle Firmware* was written entirely in C++ using 
-PlatformIO on VSCode.
+* The embedded software written in */Vehicle Firmware* was written entirely in C++ using PlatformIO on VSCode.
+* The web-based controller consists of HTML, CSS, and JavaScript. *This was created for movement testing.*
 
 ### Build Environment
 * **Compiler:** `[GCC xtensa-esp32-elf-g++]`
